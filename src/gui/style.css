@@ -1,0 +1,7 @@
+.borders {
+    border: 1px solid lightgray;
+}
+
+.bottom_border {
+    border-bottom: 1px solid lightgray;
+}
