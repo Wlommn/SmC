@@ -8,8 +8,8 @@
 #define MAX_STACK_SIZE 256
 
 typedef struct Stack {
-    double data[MAX_STACK_SIZE];
-    int size;
+  double data[MAX_STACK_SIZE];
+  int size;
 } Stack;
 
 extern Stack *Init_Stack();

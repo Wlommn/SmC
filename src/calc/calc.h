@@ -2,12 +2,12 @@
 #define SRC_CALC_CALC_H_
 
 #include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
 
-#include "../stack/stack.h"
 #include "../common_def.h"
+#include "../stack/stack.h"
 
 #define PI 3.14159265358979323846
 
