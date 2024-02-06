@@ -37,23 +37,6 @@ void clean_spaces(char *str) {
   }
 }
 
-// void input_formatting(char *input) {
-//     size_t len = strlen(input);
-//     clean_spaces(input);
-//     for (size_t i = 0; i < len; i++) {
-//         if (input[i] == ' ' && (i != 0  && isdigit(input[i - 1])) &&
-//         isdigit(input[i + 1])) {
-//             input[i] = '*';
-//         }
-//     }
-// }
-
-// bool check_input(char *input) {
-//     bool result = true;
-
-//     return result;
-// }
-
 char *infix_to_postfix(char *infix) {
   struct lconv *local = localeconv();
   int len = strlen(infix);

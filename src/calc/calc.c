@@ -49,10 +49,7 @@ double calc(char *expression, double x) {
   }
   free(tokens);
   Delete_Stack(stack);
-  if (isnan(result)) {
-    result = 0;
-  }
-  if (result != 0.0) {
+  if (result != 0.0 && !isnan(result)) {
     result = round(result * 1000000.0) / 1000000.0;
   }
   return result;

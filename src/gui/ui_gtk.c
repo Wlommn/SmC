@@ -19,6 +19,7 @@ ui_layout Init_UI_layout() {
   result.box_center = GTK_WIDGET(gtk_builder_get_object(builder, "box_center"));
   result.frame_right =
       GTK_WIDGET(gtk_builder_get_object(builder, "frame_right"));
+  result.scale_entry = GTK_WIDGET(gtk_builder_get_object(builder, "scale_entry"));
   result.b_7 = GTK_WIDGET(gtk_builder_get_object(builder, "b_7"));
   result.b_4 = GTK_WIDGET(gtk_builder_get_object(builder, "b_4"));
   result.b_1 = GTK_WIDGET(gtk_builder_get_object(builder, "b_1"));
@@ -96,14 +97,8 @@ void marking() {
   GtkRequisition *rq_nat = gtk_requisition_new();
   gtk_widget_get_preferred_size(gtk_widget_get_parent(graph_area), NULL,
                                 rq_nat);
-  gtk_widget_set_size_request(entry, BUTTON_WIDTH * 9.8, 0);
-  gtk_widget_set_size_request(graph_area, BUTTON_WIDTH * 6, BUTTON_HEIGHT * 7);
-  gtk_widget_set_size_request(layout.box_left, BUTTON_WIDTH * 1,
-                              BUTTON_HEIGHT * 5);
-  gtk_widget_set_size_request(layout.box_center, BUTTON_WIDTH * 3,
-                              BUTTON_HEIGHT * 5);
-  gtk_widget_set_size_request(layout.frame_right, BUTTON_WIDTH * 7,
-                              BUTTON_HEIGHT * 8);
+  gtk_widget_set_size_request(graph_area, 525, 525);
+  gtk_widget_set_size_request(layout.scale_entry, BUTTON_WIDTH, -1);
   gtk_widget_set_size_request(layout.b_7, BUTTON_WIDTH, BUTTON_HEIGHT);
   gtk_widget_set_size_request(layout.b_4, BUTTON_WIDTH, BUTTON_HEIGHT);
   gtk_widget_set_size_request(layout.b_1, BUTTON_WIDTH, BUTTON_HEIGHT);
@@ -298,44 +293,115 @@ void tgl_canvas(GtkListBox *, GtkListBoxRow *row) {
   if (idx == 0) {
     gtk_stack_set_visible_child_name(GTK_STACK(layout.canvas_stack),
                                      "graph_stack_page");
+    gtk_widget_set_sensitive(layout.scale_entry, true);
   } else if (idx == 1) {
     gtk_stack_set_visible_child_name(GTK_STACK(layout.canvas_stack),
                                      "credit_stack_page");
+    gtk_widget_set_sensitive(layout.scale_entry, false);
   } else if (idx == 2) {
     gtk_stack_set_visible_child_name(GTK_STACK(layout.canvas_stack),
                                      "deposit_stack_page");
+    gtk_widget_set_sensitive(layout.scale_entry, false);
   }
+}
+
+void draw_axis(cairo_t* cr, guint width, guint height) {
+  cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+  cairo_set_line_width(cr, 2.5);
+  cairo_set_source_rgb(cr, 0.4, 0.4, 1.0);
+
+  gdouble x1 = 0.0 + (width % 100 / 2), x2 = width - (width % 100 / 2);
+  gdouble y1 = 0.0 + (height % 100 / 2), y2 = height - (width % 100 / 2);
+
+  cairo_set_source_rgb(cr, 0.4, 0.4, 1.0);
+  cairo_move_to(cr, x1, height / 2);
+  cairo_line_to(cr, x2, height / 2);
+  cairo_move_to(cr, width / 2, y1);
+  cairo_line_to(cr, width / 2, y2);
+  cairo_stroke(cr);
+  
+  cairo_move_to(cr, width / 2 - 5, y1);
+  cairo_line_to(cr, width / 2 + 5, y1);
+  cairo_close_path(cr);
+
+  cairo_move_to(cr, width / 2 - 4, y2 / 4);
+  cairo_line_to(cr, width / 2 + 4, y2 / 4);
+  cairo_close_path(cr);
+
+  cairo_move_to(cr, width / 2 - 4, y2 * 0.75);
+  cairo_line_to(cr, width / 2 + 4, y2 * 0.75);
+  cairo_close_path(cr);
+
+  cairo_move_to(cr, width / 2 - 5, y2);
+  cairo_line_to(cr, width / 2 + 5, y2);
+  cairo_close_path(cr);
+
+  cairo_move_to(cr, x1, height / 2 - 5);
+  cairo_line_to(cr, x1, height / 2 + 5);
+  cairo_close_path(cr);
+
+  cairo_move_to(cr, x2 / 4, height / 2 - 4);
+  cairo_line_to(cr, x2 / 4, height / 2 + 4);
+  cairo_close_path(cr);
+
+  cairo_move_to(cr, x2 * 0.75, height / 2 - 4);
+  cairo_line_to(cr, x2 * 0.75, height / 2 + 4);
+  cairo_close_path(cr);
+
+  cairo_move_to(cr, x2, height / 2 - 5);
+  cairo_line_to(cr, x2, height / 2 + 5);
+  cairo_close_path(cr);
+
+  cairo_stroke(cr);
+  cairo_set_font_size(cr, 12.5);
+  cairo_move_to(cr, x2 - 10, y2 / 2 + 30);
+  cairo_show_text(cr, "X");
+  cairo_move_to(cr, x2 / 2 + 20, y1);
+  cairo_show_text(cr, "Y");
 }
 
 void callback_draw(GtkDrawingArea *widget, cairo_t *cr, int, int, void *) {
   gint width = gtk_widget_get_width(GTK_WIDGET(widget));
   gint height = gtk_widget_get_height(GTK_WIDGET(widget));
 
-  gdouble step_x = 1, step_y = 1;
-  gdouble x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0;
+  gdouble step = 1, step_y = 1;
+
+  gdouble x1 = 0.0 + (width % 100 / 2), x2 = width - (width % 100 / 2);
+  gdouble y1 = 0.0 + (height % 100 / 2), y2 = height - (width % 100 / 2);
+  gchar scale_str[IO_MAX_SIZE] = "\0";
+  strcpy(scale_str,
+    gtk_entry_buffer_get_text(gtk_entry_get_buffer(GTK_ENTRY(layout.scale_entry))));
+  setlocale(LC_NUMERIC, "C");
+  gdouble scale = atof(scale_str);
 
   cairo_set_source_rgba(cr, 0, 0, 0, 0.85);
   cairo_rectangle(cr, 0, 0, width, height);
   cairo_fill(cr);
-
-  cairo_translate(cr, width / 2, height / 2);
-  cairo_scale(cr, 100, -100);
-
-  cairo_device_to_user_distance(cr, &step_x, &step_y);
-  cairo_clip_extents(cr, &x1, &y1, &x2, &y2);
-  cairo_set_line_width(cr, step_x);
-
-  cairo_set_source_rgb(cr, 0.4, 0.4, 1.0);
-  cairo_move_to(cr, x1, 0.0);
-  cairo_line_to(cr, x2, 0.0);
-  cairo_move_to(cr, 0.0, y1);
-  cairo_line_to(cr, 0.0, y2);
-  cairo_stroke(cr);
+  draw_axis(cr, width, height);
 
   if (is_function) {
-    for (gdouble x = x1; x < x2; x += step_x) {
+    if (scale == 0) {
+      scale = 100;
+    }
+    cairo_translate(cr, width / 2, height / 2);
+    cairo_scale(cr, scale, -scale);
+
+    cairo_device_to_user_distance(cr, &step, &step_y);
+    cairo_clip_extents(cr, &x1, &y1, &x2, &y2);
+    cairo_set_line_width(cr, 3.0 / scale);
+
+    bool first_point = true;
+
+    for (gdouble x = x1; x < x2; x += step) {
       gdouble y = calc(postfix, x);
-      cairo_line_to(cr, x, y);
+      if (isnan(y) == 0) {
+        if (first_point) {
+          cairo_move_to(cr, x, y);
+          first_point = false;
+        } else {
+          cairo_line_to(cr, x, y);
+        }
+      }
     }
     cairo_set_source_rgba(cr, 1.0, 0.0, 0.0, 0.5);
     cairo_stroke(cr);

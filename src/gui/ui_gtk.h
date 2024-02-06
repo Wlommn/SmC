@@ -3,6 +3,8 @@
 
 #include <gtk/gtk.h>
 #include <stdio.h>
+#include <locale.h>
+#include <kplot.h>
 
 #include "../common_def.h"
 
@@ -16,6 +18,7 @@ typedef struct UI_LAYOUT {
   GtkWidget *frame_right;
   GtkWidget *canvas_tgl_list;
   GtkWidget *canvas_stack;
+  GtkWidget *scale_entry;
   GtkWidget *b_7;
   GtkWidget *b_4;
   GtkWidget *b_1;
@@ -72,6 +75,7 @@ void callback_scale();
 void callback_log();
 void callback_ln();
 void tgl_canvas(GtkListBox *, GtkListBoxRow *row);
+void draw_axis(cairo_t* cr, guint width, guint height);
 void callback_draw(GtkDrawingArea *widget, cairo_t *cr, int, int, void *);
 void output();
 
