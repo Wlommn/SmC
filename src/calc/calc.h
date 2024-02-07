@@ -19,4 +19,10 @@ double binary_operation(char ch, double op1, double op2);
 bool is_unary_op(char ch);
 double unary_operation(char ch, double op);
 
+void differentiated_calc(double amount, int period, double percent,
+                         double *payment_start, double *payment_end,
+                         double *overpayment, double *total_payout);
+void annuity_calc(double amount, int period, double percent, double *payment,
+                  double *overpayment, double *total_payout);
+
 #endif  //  SRC_CALC_CALC_H_

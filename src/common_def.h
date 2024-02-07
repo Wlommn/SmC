@@ -32,4 +32,11 @@ extern char *infix_to_postfix(char *infix);
 
 extern double calc(char *postfix, double x);
 
+extern void differentiated_calc(double amount, int period, double percent,
+                                double *payment_start, double *payment_end,
+                                double *overpayment, double *total_payout);
+extern void annuity_calc(double amount, int period, double percent,
+                         double *payment, double *overpayment,
+                         double *total_payout);
+
 #endif  //  SRC_COMMON_DEFS_H_

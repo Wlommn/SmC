@@ -1,6 +1,7 @@
 #include "./ui_gtk.h"
 
 ui_layout layout;
+credit_data credit_d;
 GtkWidget *entry;
 GtkWidget *graph_area;
 GtkBuilder *builder;
@@ -12,14 +13,14 @@ void get_input(char *input_str) {
   }
 }
 
-ui_layout Init_UI_layout() {
+ui_layout init_ui_layout() {
   ui_layout result;
-  result.grid_nums = NULL;
   result.box_left = GTK_WIDGET(gtk_builder_get_object(builder, "box_left"));
   result.box_center = GTK_WIDGET(gtk_builder_get_object(builder, "box_center"));
   result.frame_right =
       GTK_WIDGET(gtk_builder_get_object(builder, "frame_right"));
-  result.scale_entry = GTK_WIDGET(gtk_builder_get_object(builder, "scale_entry"));
+  result.scale_entry =
+      GTK_WIDGET(gtk_builder_get_object(builder, "scale_entry"));
   result.b_7 = GTK_WIDGET(gtk_builder_get_object(builder, "b_7"));
   result.b_4 = GTK_WIDGET(gtk_builder_get_object(builder, "b_4"));
   result.b_1 = GTK_WIDGET(gtk_builder_get_object(builder, "b_1"));
@@ -57,6 +58,26 @@ ui_layout Init_UI_layout() {
   return result;
 }
 
+credit_data init_credit_data() {
+  credit_data result;
+  result.amount_credit =
+      GTK_WIDGET(gtk_builder_get_object(builder, "amount_credit"));
+  result.credit_item =
+      GTK_WIDGET(gtk_builder_get_object(builder, "credit_item"));
+  result.intrest_rate =
+      GTK_WIDGET(gtk_builder_get_object(builder, "intrest_rate"));
+  result.payment = GTK_WIDGET(gtk_builder_get_object(builder, "payment"));
+  result.overpayment =
+      GTK_WIDGET(gtk_builder_get_object(builder, "overpayment"));
+  result.total_payout =
+      GTK_WIDGET(gtk_builder_get_object(builder, "total_payout"));
+  result.credit_type =
+      GTK_WIDGET(gtk_builder_get_object(builder, "credit_type"));
+  result.credit_calc_b =
+      GTK_WIDGET(gtk_builder_get_object(builder, "credit_calc_b"));
+  return result;
+}
+
 void activate(GtkApplication *app) {
   gtk_init();
   GtkCssProvider *css_provider;
@@ -71,7 +92,8 @@ void activate(GtkApplication *app) {
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
   builder = gtk_builder_new_from_file("./src/gui/smc_2.ui");
-  layout = Init_UI_layout();
+  layout = init_ui_layout();
+  credit_d = init_credit_data();
   graph_area = GTK_WIDGET(gtk_builder_get_object(builder, "graph_area"));
 
   GtkWidget *window;
@@ -182,6 +204,9 @@ void add_signals() {
 
   g_signal_connect(G_OBJECT(layout.canvas_tgl_list), "row-selected",
                    G_CALLBACK(tgl_canvas), NULL);
+
+  g_signal_connect(G_OBJECT(credit_d.credit_calc_b), "clicked",
+                   G_CALLBACK(credit_callback), NULL);
 }
 
 void callback_nums(GtkWidget *widget) {
@@ -293,19 +318,13 @@ void tgl_canvas(GtkListBox *, GtkListBoxRow *row) {
   if (idx == 0) {
     gtk_stack_set_visible_child_name(GTK_STACK(layout.canvas_stack),
                                      "graph_stack_page");
-    gtk_widget_set_sensitive(layout.scale_entry, true);
   } else if (idx == 1) {
     gtk_stack_set_visible_child_name(GTK_STACK(layout.canvas_stack),
                                      "credit_stack_page");
-    gtk_widget_set_sensitive(layout.scale_entry, false);
-  } else if (idx == 2) {
-    gtk_stack_set_visible_child_name(GTK_STACK(layout.canvas_stack),
-                                     "deposit_stack_page");
-    gtk_widget_set_sensitive(layout.scale_entry, false);
   }
 }
 
-void draw_axis(cairo_t* cr, guint width, guint height) {
+void draw_axis(cairo_t *cr, guint width, guint height) {
   cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
   cairo_set_line_width(cr, 2.5);
   cairo_set_source_rgb(cr, 0.4, 0.4, 1.0);
@@ -319,7 +338,7 @@ void draw_axis(cairo_t* cr, guint width, guint height) {
   cairo_move_to(cr, width / 2, y1);
   cairo_line_to(cr, width / 2, y2);
   cairo_stroke(cr);
-  
+
   cairo_move_to(cr, width / 2 - 5, y1);
   cairo_line_to(cr, width / 2 + 5, y1);
   cairo_close_path(cr);
@@ -369,8 +388,8 @@ void callback_draw(GtkDrawingArea *widget, cairo_t *cr, int, int, void *) {
   gdouble x1 = 0.0 + (width % 100 / 2), x2 = width - (width % 100 / 2);
   gdouble y1 = 0.0 + (height % 100 / 2), y2 = height - (width % 100 / 2);
   gchar scale_str[IO_MAX_SIZE] = "\0";
-  strcpy(scale_str,
-    gtk_entry_buffer_get_text(gtk_entry_get_buffer(GTK_ENTRY(layout.scale_entry))));
+  strcpy(scale_str, gtk_entry_buffer_get_text(
+                        gtk_entry_get_buffer(GTK_ENTRY(layout.scale_entry))));
   setlocale(LC_NUMERIC, "C");
   gdouble scale = atof(scale_str);
 
@@ -426,4 +445,71 @@ void output() {
       gtk_widget_queue_draw(graph_area);
     }
   }
+}
+
+void credit_callback() {
+  char amount_str[IO_MAX_SIZE] = "\0";
+  strcpy(amount_str, gtk_entry_buffer_get_text(gtk_entry_get_buffer(
+                         GTK_ENTRY(credit_d.amount_credit))));
+
+  char period_str[IO_MAX_SIZE] = "\0";
+  strcpy(period_str, gtk_entry_buffer_get_text(gtk_entry_get_buffer(
+                         GTK_ENTRY(credit_d.credit_item))));
+
+  char rate_str[IO_MAX_SIZE] = "\0";
+  strcpy(rate_str, gtk_entry_buffer_get_text(
+                       gtk_entry_get_buffer(GTK_ENTRY(credit_d.intrest_rate))));
+
+  gboolean type = gtk_switch_get_state(GTK_SWITCH(credit_d.credit_type));
+
+  setlocale(LC_NUMERIC, "C");
+  gdouble amount = atof(amount_str);
+  guint period = atoi(period_str);
+  gdouble percent = atof(rate_str) / 100.0;
+  gdouble payment_start = 0.0, payment_end = 0.0;
+  gdouble overpayment = 0.0, total_payout = 0.0;
+
+  if (type) {
+    differentiated_calc(amount, period, percent, &payment_start, &payment_end,
+                        &overpayment, &total_payout);
+  } else {
+    annuity_calc(amount, period, percent, &payment_start, &overpayment,
+                 &total_payout);
+  }
+
+  credit_output(payment_start, payment_end, overpayment, total_payout);
+}
+
+void clear_credit_output() {
+  gtk_editable_delete_text(GTK_EDITABLE(credit_d.payment), 0, IO_MAX_SIZE);
+  gtk_editable_delete_text(GTK_EDITABLE(credit_d.overpayment), 0, IO_MAX_SIZE);
+  gtk_editable_delete_text(GTK_EDITABLE(credit_d.total_payout), 0, IO_MAX_SIZE);
+}
+
+void credit_output(double payment_start, double payment_end, double overpayment,
+                   double total_payout) {
+  clear_credit_output();
+  char payment_str[IO_MAX_SIZE] = "\0";
+  char overpayment_str[IO_MAX_SIZE] = "\0";
+  char total_payout_str[IO_MAX_SIZE] = "\0";
+
+  if (payment_end != 0.0) {
+    sprintf(payment_str, "%.2lf - %.2lf", payment_start, payment_end);
+  } else {
+    sprintf(payment_str, "%.2lf", payment_start);
+  }
+  sprintf(overpayment_str, "%.2lf", overpayment);
+  sprintf(total_payout_str, "%.2lf", total_payout);
+
+  printf("HERE: %s, %s, %s \n", payment_str, overpayment_str, total_payout_str);
+
+  gint pos = 0;
+  gtk_editable_insert_text(GTK_EDITABLE(credit_d.payment), payment_str,
+                           strlen(payment_str), &pos);
+  pos = 0;
+  gtk_editable_insert_text(GTK_EDITABLE(credit_d.overpayment), overpayment_str,
+                           strlen(overpayment_str), &pos);
+  pos = 0;
+  gtk_editable_insert_text(GTK_EDITABLE(credit_d.total_payout),
+                           total_payout_str, strlen(total_payout_str), &pos);
 }

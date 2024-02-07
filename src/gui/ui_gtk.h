@@ -2,9 +2,9 @@
 #define SRC_GUI_UI_GTK_H_
 
 #include <gtk/gtk.h>
-#include <stdio.h>
-#include <locale.h>
 #include <kplot.h>
+#include <locale.h>
+#include <stdio.h>
 
 #include "../common_def.h"
 
@@ -12,7 +12,6 @@
 #define BUTTON_HEIGHT 45
 
 typedef struct UI_LAYOUT {
-  GtkWidget *grid_nums;
   GtkWidget *box_left;
   GtkWidget *box_center;
   GtkWidget *frame_right;
@@ -51,8 +50,21 @@ typedef struct UI_LAYOUT {
   GtkWidget *b_x;
 } ui_layout;
 
+typedef struct CREDIT_ENTRIES {
+  GtkWidget *amount_credit;
+  GtkWidget *credit_item;
+  GtkWidget *intrest_rate;
+  GtkWidget *payment;
+  GtkWidget *overpayment;
+  GtkWidget *total_payout;
+  GtkWidget *credit_type;
+  GtkWidget *credit_calc_b;
+} credit_data;
+
 void get_input(char *input_str);
-ui_layout Init_UI_layout();
+ui_layout init_ui_layout();
+
+credit_data init_credit_data();
 
 extern void activate(GtkApplication *app);
 void marking();
@@ -75,8 +87,13 @@ void callback_scale();
 void callback_log();
 void callback_ln();
 void tgl_canvas(GtkListBox *, GtkListBoxRow *row);
-void draw_axis(cairo_t* cr, guint width, guint height);
+void draw_axis(cairo_t *cr, guint width, guint height);
 void callback_draw(GtkDrawingArea *widget, cairo_t *cr, int, int, void *);
 void output();
+
+void credit_callback();
+void clear_credit_output();
+void credit_output(double payment_start, double payment_end, double overpayment,
+                   double total_payout);
 
 #endif  //  SRC_GUI_UI_GTK_H_

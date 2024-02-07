@@ -158,3 +158,31 @@ double unary_operation(char ch, double op) {
   }
   return result;
 }
+
+void differentiated_calc(double amount, int period, double percent,
+                         double *payment_start, double *payment_end,
+                         double *overpayment, double *total_payout) {
+  double diff_payment = 0.0;
+  double percent_part = 0.0;
+  double amount_copy = amount;
+  double credit_part = amount_copy / period;
+  *payment_start = credit_part + (amount_copy * percent * (365 / 12)) / 365;
+  while (amount_copy > 1) {
+    percent_part = (amount_copy * percent * (365 / 12)) / 365;
+    amount_copy -= credit_part;
+    diff_payment = credit_part + percent_part;
+    *total_payout += diff_payment;
+  }
+  *payment_end = diff_payment;
+  *overpayment = *total_payout - amount;
+}
+
+void annuity_calc(double amount, int period, double percent, double *payment,
+                  double *overpayment, double *total_payout) {
+  percent /= 12;
+  double K = percent * pow((1.0 + percent), period) /
+             (pow((1.0 + percent), period) - 1.0);
+  *payment = K * amount;
+  *total_payout = *payment * period;
+  *overpayment = *total_payout - amount;
+}
